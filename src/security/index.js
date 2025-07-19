@@ -5,6 +5,7 @@ export { default as SecureStorage } from './services/SecureStorage';
 export { default as APISecurityService } from './services/APISecurityService';
 export { default as BlockchainSecurity } from './services/BlockchainSecurity';
 export { default as SecurityProvider } from './SecurityProvider';
+export { default as ZeroKnowledgeService } from './services/ZeroKnowledgeService';
 
 // Quick initialization function
 export const initializeSecurity = async () => {

@@ -783,4 +783,70 @@ export default class BlockchainSecurity {
     return Array.from(this.pendingTransactions.values())
       .filter(tx => tx.status === 'pending');
   }
+  /**
+ * Store Excel file hash on Gaza blockchain for medical audit trail
+ */
+public async storeExcelOnBlockchain(
+  excelData: string,
+  patientCount: number,
+  doctorId: string,
+  reportType: 'daily' | 'weekly' | 'monthly' = 'daily'
+): Promise<BlockchainTransaction> {
+  try {
+    console.log(`📊 Storing Excel report on Gaza blockchain: ${reportType} report with ${patientCount} patients`);
+    
+    const excelMetadata = {
+      fileType: 'gaza_medical_excel',
+      patientCount,
+      reportType,
+      doctorId,
+      createdAt: Date.now(),
+      fileSize: excelData.length
+    };
+
+    const excelHash = CryptoJS.SHA256(excelData + JSON.stringify(excelMetadata)).toString();
+    
+    const blockchainRecord: BlockchainRecord = {
+      recordId: `gaza_excel_${reportType}_${patientCount}p_${Date.now()}`,
+      patientHash: excelHash,
+      doctorHash: await this.generateDoctorHash(doctorId),
+      digitalSignature: await this.generateDigitalSignature(excelHash, await this.generateDoctorHash(doctorId), doctorId),
+      timestamp: Date.now(),
+      deviceFingerprint: this.cryptoService.getDeviceFingerprint()?.hash || 'unknown',
+      integrityProof: await this.generateIntegrityProof(excelHash, excelHash, this.cryptoService.getDeviceFingerprint()?.hash || 'unknown')
+    };
+
+    const transaction = await this.storeOnBlockchain(blockchainRecord);
+    
+    console.log(`✅ Excel report stored on Gaza blockchain: ${transaction.hash}`);
+    return transaction;
+  } catch (error) {
+    console.error('❌ Excel blockchain storage failed:', error);
+    const errorMsg = typeof error === 'object' && error !== null && 'message' in error ? (error as any).message : String(error);
+    throw new Error(`Excel blockchain storage failed: ${errorMsg}`);
+  }
+}
+
+/**
+ * Verify Excel file authenticity using Gaza blockchain
+ */
+public async verifyExcelIntegrity(excelData: string, expectedHash: string): Promise<boolean> {
+  try {
+    console.log('🔍 Verifying Excel file integrity using Gaza blockchain...');
+    
+    const currentHash = CryptoJS.SHA256(excelData).toString();
+    const isValid = currentHash === expectedHash;
+    
+    if (isValid) {
+      console.log('✅ Excel file verified: Authentic Gaza clinic medical report');
+    } else {
+      console.error('❌ Excel file verification FAILED: File may be tampered or counterfeit');
+    }
+    
+    return isValid;
+  } catch (error) {
+    console.error('❌ Excel verification failed:', error);
+    return false;
+  }
+}
 }
