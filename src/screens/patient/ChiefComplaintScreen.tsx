@@ -164,38 +164,7 @@ export const ChiefComplaintScreen: React.FC = () => {
               </Text>
             </View>
 
-            {/* Quick Entry Suggestions */}
-            <View style={styles.quickEntryContainer}>
-              <Text style={styles.quickEntryTitle}>Quick Entry Suggestions:</Text>
-              <View style={styles.suggestionGrid}>
-                {[
-                  'Onset: Sudden/Gradual',
-                  'Duration: Hours/Days/Weeks',
-                  'Severity: 1-10 scale',
-                  'Quality: Sharp/Dull/Burning',
-                  'Location: Specific area',
-                  'Radiation: Where pain travels',
-                  'Associated symptoms',
-                  'Aggravating factors',
-                  'Relieving factors',
-                  'Previous episodes',
-                ].map((suggestion, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.suggestionChip}
-                    onPress={() => {
-                      // TODO: Implement quick text insertion functionality
-                      const currentText = historyOfPresentingComplaint;
-                      const newText = currentText + (currentText ? '\n' : '') + suggestion + ': ';
-                      setHistoryOfPresentingComplaint(newText);
-                    }}
-                  >
-                    <Ionicons name="add" size={14} color="#2196F3" />
-                    <Text style={styles.suggestionText}>{suggestion}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+
           </View>
         </Card>
 
@@ -300,36 +269,7 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'right',
   },
-  quickEntryContainer: {
-    gap: 8,
-    marginTop: 8,
-  },
-  quickEntryTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
-  },
-  suggestionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  suggestionChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#f0f8ff',
-    borderWidth: 1,
-    borderColor: '#e3f2fd',
-    borderRadius: 16,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  suggestionText: {
-    fontSize: 12,
-    color: '#2196F3',
-    fontWeight: '500',
-  },
+
   actionButtons: {
     flexDirection: 'row',
     gap: 12,

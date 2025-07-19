@@ -42,39 +42,24 @@ export const MedsAllergiesScreen: React.FC = () => {
   const { patientData } = route.params;
 
   // Form state
-  const [selectedMedications, setSelectedMedications] = useState<string[]>([]);
-  const [medicationSearch, setMedicationSearch] = useState('');
-  const [showMedicationResults, setShowMedicationResults] = useState(false);
+  const [medications, setMedications] = useState<string[]>([]);
+  const [newMedication, setNewMedication] = useState('');
 
   const [allergies, setAllergies] = useState<Allergy[]>([
     { id: '1', type: 'Drug', allergen: '', reaction: '' }
   ]);
 
-  const [selectedDiagnoses, setSelectedDiagnoses] = useState<string[]>([]);
-  const [otherDiagnosis, setOtherDiagnosis] = useState('');
-
   // Medication functions
-  const handleMedicationSearch = (query: string) => {
-    setMedicationSearch(query);
-    setShowMedicationResults(query.length > 0);
-  };
-
-  const addMedication = (medicationId: string) => {
-    if (!selectedMedications.includes(medicationId)) {
-      setSelectedMedications([...selectedMedications, medicationId]);
+  const addMedication = () => {
+    if (newMedication.trim() && !medications.includes(newMedication.trim())) {
+      setMedications([...medications, newMedication.trim()]);
+      setNewMedication('');
     }
-    setMedicationSearch('');
-    setShowMedicationResults(false);
   };
 
-  const removeMedication = (medicationId: string) => {
-    setSelectedMedications(selectedMedications.filter(id => id !== medicationId));
+  const removeMedication = (medication: string) => {
+    setMedications(medications.filter(med => med !== medication));
   };
-
-  const filteredMedications = mockMedications.filter(med => 
-    med.name.toLowerCase().includes(medicationSearch.toLowerCase()) &&
-    !selectedMedications.includes(med.id)
-  );
 
   // Allergy functions
   const addAllergyRow = () => {
@@ -94,22 +79,11 @@ export const MedsAllergiesScreen: React.FC = () => {
     ));
   };
 
-  // Diagnosis functions
-  const toggleDiagnosis = (diagnosisId: string) => {
-    if (selectedDiagnoses.includes(diagnosisId)) {
-      setSelectedDiagnoses(selectedDiagnoses.filter(id => id !== diagnosisId));
-    } else {
-      setSelectedDiagnoses([...selectedDiagnoses, diagnosisId]);
-    }
-  };
-
   const handleNext = () => {
-    // TODO: Validate and save medications, allergies, and diagnoses data
+    // TODO: Validate and save medications and allergies data
     const medsAllergiesData = {
-      medications: selectedMedications.map(id => mockMedications.find(med => med.id === id)),
+      medications: medications,
       allergies: allergies.filter(allergy => allergy.allergen.trim() !== ''),
-      diagnoses: selectedDiagnoses.map(id => mockDiagnoses.find(diag => diag.id === id)),
-      otherDiagnosis: otherDiagnosis.trim(),
     };
 
     const updatedPatientData = {
@@ -133,71 +107,43 @@ export const MedsAllergiesScreen: React.FC = () => {
               Include prescriptions, over-the-counter medications, and supplements
             </Text>
             
-            {/* Medication Search */}
-            <View style={styles.searchContainer}>
-              <View style={styles.searchInputContainer}>
-                <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+            {/* Add New Medication */}
+            <View style={styles.addMedicationContainer}>
+              <View style={styles.addInputContainer}>
                 <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search medications (e.g., Aspirin, Metformin)..."
-                  value={medicationSearch}
-                  onChangeText={handleMedicationSearch}
+                  style={styles.addInput}
+                  placeholder="Enter medication name (e.g., Aspirin 325mg daily)"
+                  value={newMedication}
+                  onChangeText={setNewMedication}
+                  onSubmitEditing={addMedication}
+                  returnKeyType="done"
                 />
-                {medicationSearch.length > 0 && (
-                  <TouchableOpacity
-                    style={styles.clearButton}
-                    onPress={() => handleMedicationSearch('')}
-                  >
-                    <Ionicons name="close" size={16} color="#666" />
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity
+                  style={[styles.addButton, !newMedication.trim() && styles.addButtonDisabled]}
+                  onPress={addMedication}
+                  disabled={!newMedication.trim()}
+                >
+                  <Text style={styles.addButtonText}>Add</Text>
+                </TouchableOpacity>
               </View>
-              
-              {/* Search Results */}
-              {showMedicationResults && (
-                <View style={styles.searchResults}>
-                  {filteredMedications.length > 0 ? (
-                    filteredMedications.map((medication) => (
-                      <TouchableOpacity
-                        key={medication.id}
-                        style={styles.searchResultItem}
-                        onPress={() => addMedication(medication.id)}
-                      >
-                        <View style={styles.medicationInfo}>
-                          <Text style={styles.medicationName}>{medication.name}</Text>
-                          <Text style={styles.medicationCode}>{medication.code} • {medication.type}</Text>
-                        </View>
-                        <Ionicons name="add" size={20} color="#2196F3" />
-                      </TouchableOpacity>
-                    ))
-                  ) : (
-                    <View style={styles.noResults}>
-                      <Text style={styles.noResultsText}>No medications found</Text>
-                      <Text style={styles.noResultsSubtext}>
-                        // TODO: Connect to pharmacy API/SNOMED database
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
             </View>
 
-            {/* Selected Medications Tags */}
-            <View style={styles.tagsContainer}>
-              {selectedMedications.map((medId) => {
-                const medication = mockMedications.find(med => med.id === medId);
-                return medication ? (
-                  <View key={medId} style={styles.medicationTag}>
-                    <Text style={styles.tagText}>{medication.name}</Text>
-                    <TouchableOpacity
-                      style={styles.tagRemove}
-                      onPress={() => removeMedication(medId)}
-                    >
-                      <Ionicons name="close" size={16} color="#666" />
-                    </TouchableOpacity>
-                  </View>
-                ) : null;
-              })}
+            {/* Medications List */}
+            <View style={styles.medicationsContainer}>
+              {medications.map((medication, index) => (
+                <View key={index} style={styles.medicationItem}>
+                  <Text style={styles.medicationText}>{medication}</Text>
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => removeMedication(medication)}
+                  >
+                    <Ionicons name="close" size={16} color="#dc3545" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              {medications.length === 0 && (
+                <Text style={styles.emptyText}>No medications added yet</Text>
+              )}
             </View>
           </View>
         </Card>
@@ -279,61 +225,7 @@ export const MedsAllergiesScreen: React.FC = () => {
           </View>
         </Card>
 
-        {/* Problem List Section */}
-        <Card>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Active Problem List</Text>
-            <Text style={styles.sectionSubtitle}>
-              Select chronic conditions and active diagnoses
-            </Text>
-            
-            <View style={styles.diagnosesContainer}>
-              {mockDiagnoses.map((diagnosis) => (
-                <TouchableOpacity
-                  key={diagnosis.id}
-                  style={[
-                    styles.diagnosisItem,
-                    selectedDiagnoses.includes(diagnosis.id) && styles.diagnosisItemSelected
-                  ]}
-                  onPress={() => toggleDiagnosis(diagnosis.id)}
-                >
-                  <View style={styles.diagnosisInfo}>
-                    <Text style={[
-                      styles.diagnosisName,
-                      selectedDiagnoses.includes(diagnosis.id) && styles.diagnosisNameSelected
-                    ]}>
-                      {diagnosis.name}
-                    </Text>
-                    <Text style={styles.diagnosisCategory}>
-                      {diagnosis.category} • {diagnosis.code}
-                    </Text>
-                  </View>
-                  <View style={[
-                    styles.checkbox,
-                    selectedDiagnoses.includes(diagnosis.id) && styles.checkboxSelected
-                  ]}>
-                    {selectedDiagnoses.includes(diagnosis.id) && (
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    )}
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
 
-            {/* Other Diagnosis */}
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Other Conditions</Text>
-              <TextInput
-                style={[styles.textInput, styles.multilineInput]}
-                value={otherDiagnosis}
-                onChangeText={setOtherDiagnosis}
-                placeholder="List any other active conditions not mentioned above..."
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-          </View>
-        </Card>
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
@@ -378,16 +270,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  addButtonText: {
-    fontSize: 14,
-    color: '#2196F3',
-    fontWeight: '500',
-  },
+
   fieldContainer: {
     gap: 6,
   },
@@ -410,95 +293,69 @@ const styles = StyleSheet.create({
     height: 80,
     textAlignVertical: 'top',
   },
-  searchContainer: {
-    position: 'relative',
+  addMedicationContainer: {
+    gap: 8,
   },
-  searchInputContainer: {
+  addInputContainer: {
     flexDirection: 'row',
+    gap: 8,
     alignItems: 'center',
+  },
+  addInput: {
+    flex: 1,
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#e0e0e0',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
     fontSize: 16,
     color: '#333',
-    paddingVertical: 0,
   },
-  clearButton: {
-    padding: 4,
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
   },
-  searchResults: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderTopWidth: 0,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    maxHeight: 200,
+  addButtonDisabled: {
+    backgroundColor: '#bdbdbd',
   },
-  searchResultItem: {
+  addButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  medicationsContainer: {
+    gap: 8,
+  },
+  medicationItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: '#f8f9fa',
     padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
-  medicationInfo: {
+  medicationText: {
     flex: 1,
-  },
-  medicationName: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 14,
     color: '#333',
   },
-  medicationCode: {
+  removeButton: {
+    padding: 4,
+  },
+  emptyText: {
     fontSize: 14,
-    color: '#666',
-  },
-  noResults: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  noResultsText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  noResultsSubtext: {
-    fontSize: 12,
     color: '#999',
     fontStyle: 'italic',
-    marginTop: 4,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  medicationTag: {
-    backgroundColor: '#e3f2fd',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  tagText: {
-    fontSize: 14,
-    color: '#2196F3',
-    fontWeight: '500',
-  },
-  tagRemove: {
-    padding: 2,
+    textAlign: 'center',
+    paddingVertical: 16,
   },
   allergyRow: {
     backgroundColor: '#f8f9fa',
@@ -545,38 +402,7 @@ const styles = StyleSheet.create({
   allergyTypeButtonTextSelected: {
     color: '#2196F3',
   },
-  diagnosesContainer: {
-    gap: 8,
-  },
-  diagnosisItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  diagnosisItemSelected: {
-    borderColor: '#2196F3',
-    backgroundColor: '#f3f8ff',
-  },
-  diagnosisInfo: {
-    flex: 1,
-  },
-  diagnosisName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-  },
-  diagnosisNameSelected: {
-    color: '#2196F3',
-  },
-  diagnosisCategory: {
-    fontSize: 14,
-    color: '#666',
-  },
+
   checkbox: {
     width: 24,
     height: 24,
@@ -590,6 +416,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2196F3',
     borderColor: '#2196F3',
   },
+
   actionButtons: {
     flexDirection: 'row',
     gap: 12,
